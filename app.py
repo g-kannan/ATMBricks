@@ -9,6 +9,7 @@ import pytz
 import duckdb
 
 st.set_page_config(layout="wide")
+
 def query_clusters(workspace_info: Dict) -> List[Dict]:
     """
     Query clusters for a specific workspace
@@ -33,24 +34,6 @@ def query_clusters(workspace_info: Dict) -> List[Dict]:
     except Exception as e:
         st.error(f"Error querying {workspace_info['url']}: {str(e)}")
         return []
-
-def get_metastore_details(workspace_info: Dict) -> Dict:
-    """
-    Get metastore details for a specific workspace
-    """
-    url = f"{workspace_info['url']}/api/2.1/unity-catalog/metastores"
-    headers = {
-        "Authorization": f"Bearer {workspace_info['token']}",
-        "Content-Type": "application/json"
-    }
-    
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        st.error(f"Error querying metastore for {workspace_info['url']}: {str(e)}")
-        return {}
 
 def process_workspaces(workspaces: List[Dict]) -> pd.DataFrame:
     """
@@ -124,35 +107,16 @@ if uploaded_file is not None:
         if not isinstance(data, list):
             st.error("Invalid JSON format. Expected a list of workspace configurations.")
         else:
-            # Create a list of URLs from the workspace configurations
-            urls = [workspace['url'] for workspace in data]
-            selected_url = st.selectbox("Select Workspace URL", urls)
-            
-            # Find the selected workspace configuration
-            selected_workspace = next((workspace for workspace in data if workspace['url'] == selected_url), None)
-
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("List Clusters"):
-                    st.info("Processing workspaces...")
-                    df = process_workspaces(data)
-                    if not df.empty:
-                        st.success(f"Found clusters across {len(data)} workspaces")
-                        final_df = select_and_convert_times(df)
-                        st.dataframe(final_df,hide_index=True)
-                    else:
-                        st.warning("No clusters found in any workspace")
-            
-            with col2:
-                if st.button("List Metastores"):
-                    if selected_workspace:
-                        st.info(f"Fetching metastore details for {selected_url}...")
-                        metastore_details = get_metastore_details(selected_workspace)
-                        if metastore_details:
-                            st.json(metastore_details)
-                        else:
-                            st.warning("No metastore details found")
-    
+            if st.button("List Clusters"):
+                st.info("Processing workspaces...")
+                df = process_workspaces(data)
+                if not df.empty:
+                    st.success(f"Found clusters across {len(data)} workspaces")
+                    final_df = select_and_convert_times(df)
+                    st.dataframe(final_df,hide_index=True)
+                else:
+                    st.warning("No clusters found in any workspace")
+                
     except json.JSONDecodeError:
         st.error("Invalid JSON file")
     except Exception as e:
