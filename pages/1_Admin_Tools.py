@@ -24,7 +24,7 @@ def get_metastore_details(workspace_info: Dict) -> Dict:
         st.error(f"Error querying metastore for {workspace_info['url']}: {str(e)}")
         return {}
 
-st.title("Admin Tools")
+st.title("Workspace Admin Tools")
 
 uploaded_file = st.file_uploader("Choose a JSON file", type=["json"])
 
