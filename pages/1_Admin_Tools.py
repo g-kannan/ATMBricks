@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import requests
 from typing import Dict
+import pandas as pd
 
 st.set_page_config(layout="wide")
 
@@ -46,7 +47,8 @@ if uploaded_file is not None:
                     st.info(f"Fetching metastore details for {selected_url}...")
                     metastore_details = get_metastore_details(selected_workspace)
                     if metastore_details:
-                        st.json(metastore_details)
+                        metastore_details_df = pd.DataFrame(metastore_details.get('metastores', []))
+                        st.dataframe(metastore_details_df,hide_index=True)
                     else:
                         st.warning("No metastore details found")
     
