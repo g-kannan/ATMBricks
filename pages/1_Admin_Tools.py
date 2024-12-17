@@ -47,14 +47,14 @@ def get_system_table_status(workspace_info: Dict) -> pd.DataFrame:
         system_table_df = pd.DataFrame(system_table_status.get('schemas', []))
         return system_table_df
     except Exception as e:
-        st.error(f"Error getting system table status: {str(e)}")
+        st.error(f"Error getting system schema status: {str(e)}")
         return pd.DataFrame()
 
-def enable_system_table(workspace_info: Dict, metastore_id: str, table_name: str) -> Dict:
+def enable_system_schema(workspace_info: Dict, metastore_id: str, schema_name: str) -> Dict:
     """
-    Enable a system table for a specific metastore
+    Enable a system schema for a specific metastore
     """
-    url = f"{workspace_info['url']}/api/2.1/unity-catalog/metastores/{metastore_id}/systemschemas/{table_name}"
+    url = f"{workspace_info['url']}/api/2.1/unity-catalog/metastores/{metastore_id}/systemschemas/{schema_name}"
     headers = {
         "Authorization": f"Bearer {workspace_info['token']}",
         "Content-Type": "application/json"
@@ -63,10 +63,10 @@ def enable_system_table(workspace_info: Dict, metastore_id: str, table_name: str
     try:
         response = requests.put(url, headers=headers)
         response.raise_for_status()
-        st.success(f"System table {table_name} enabled successfully")
+        st.success(f"System schema {schema_name} enabled successfully")
         return response.json()
     except Exception as e:
-        st.error(f"Error enabling system table: {str(e)}")
+        st.error(f"Error enabling system schema: {str(e)}")
         return {}
 
 st.title("Workspace Admin Tools")
@@ -98,31 +98,33 @@ if uploaded_file is not None:
                         st.warning("No metastore details found")
             
             # Get metastore ID from the first metastore in the list
-            if st.button("Get System Table Status"):
+            if st.button("Get System Schema Status"):
                 system_table_df = get_system_table_status(selected_workspace)
                 if not system_table_df.empty:
                     st.dataframe(system_table_df, hide_index=True)
                 else:
-                    st.warning("No system table status data found")
+                    st.warning("No system schema status data found")
 
             # st.write("Select System Table to Enable")
-            system_table_df = get_system_table_status(selected_workspace)
-            filtered_df = system_table_df[system_table_df['state'] == "AVAILABLE"]
-            available_tables = filtered_df["schema"].tolist()
+            show_schema = st.checkbox("Show available schemas to Enable")
+            if show_schema:
+                system_table_df = get_system_table_status(selected_workspace)
+                filtered_df = system_table_df[system_table_df['state'] == "AVAILABLE"]
+                available_tables = filtered_df["schema"].tolist()
             # st.write(available_tables)
             
-            if 'table_select' not in st.session_state:
-                    st.session_state.table_select = None
-            st.session_state.table_select = st.selectbox("Select System Table to Enable", available_tables)
-            if st.button("Enable System Table"):
-                if st.session_state.table_select:  # Check if a table was selected
-                    st.info(f"Enabling system table: {st.session_state.table_select}")
-                    metastore_details = get_metastore_details(selected_workspace)
-                    metastore_id = get_metastore_id(metastore_details)
-                    try:
-                        response = enable_system_table(selected_workspace,metastore_id,st.session_state.table_select)
-                    except Exception as e:
-                        st.error(f"Error enabling system table kkk: {str(e)}")
+                if 'table_select' not in st.session_state:
+                        st.session_state.table_select = None
+                st.session_state.table_select = st.selectbox("Select System Schema to Enable", available_tables)
+                if st.button("Enable System Schema"):
+                    if st.session_state.table_select:  # Check if a table was selected
+                        st.info(f"Enabling system schema: {st.session_state.table_select}")
+                        metastore_details = get_metastore_details(selected_workspace)
+                        metastore_id = get_metastore_id(metastore_details)
+                        try:
+                            response = enable_system_schema(selected_workspace,metastore_id,st.session_state.table_select)
+                        except Exception as e:
+                            st.error(f"Error enabling system table kkk: {str(e)}")
 
     except json.JSONDecodeError:
         st.error("Invalid JSON file")
