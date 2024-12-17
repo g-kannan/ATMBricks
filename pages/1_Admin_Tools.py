@@ -71,7 +71,7 @@ def enable_system_schema(workspace_info: Dict, metastore_id: str, schema_name: s
 
 st.title("Workspace Admin Tools")
 
-uploaded_file = st.file_uploader("Choose a JSON file", type=["json"])
+uploaded_file = st.file_uploader("Choose JSON file with Workspace details", type=["json"])
 
 if uploaded_file is not None:
     try:

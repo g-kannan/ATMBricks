@@ -9,7 +9,8 @@ import pytz
 import duckdb
 
 st.set_page_config(layout="wide",page_title='ATMBricks')
-st.title("AcrossDa")
+st.title("ATMBricks")
+st.header("Audit, Tweak & Make Databricks API Calls easily")
 
 def query_clusters(workspace_info: Dict) -> List[Dict]:
     """
@@ -144,7 +145,24 @@ def process_warehouses(workspaces: List[Dict]) -> pd.DataFrame:
     return pd.DataFrame(all_warehouses)
 
 
-uploaded_file = st.file_uploader("Choose a JSON file", type=["json"])
+uploaded_file = st.file_uploader("Choose JSON file with Workspace details", type=["json"])
+
+show_sample_json = st.checkbox("Show Sample JSON")
+if show_sample_json:
+    st.json("""
+    [
+        {
+        "url": "https://workspace1.clouddatabricks.net",
+        "token": "token",
+        "environment": "prod"
+        },
+        {
+        "url": "https://workspace2.clouddatabricks.net",
+        "token": "token",
+        "environment": "prod"
+        }
+    ]
+    """)
 
 if uploaded_file is not None:
     try:
