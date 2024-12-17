@@ -8,7 +8,8 @@ from datetime import datetime
 import pytz
 import duckdb
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide",page_title='ATMBricks')
+st.title("AcrossDa")
 
 def query_clusters(workspace_info: Dict) -> List[Dict]:
     """
@@ -142,7 +143,7 @@ def process_warehouses(workspaces: List[Dict]) -> pd.DataFrame:
     
     return pd.DataFrame(all_warehouses)
 
-st.title("AcrossDa")
+
 uploaded_file = st.file_uploader("Choose a JSON file", type=["json"])
 
 if uploaded_file is not None:
