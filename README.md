@@ -54,10 +54,11 @@ ATMBricks (Audit, Tweak & Make Databricks API Calls easily) is a Streamlit-based
 3. Select your workspace from the dropdown
 4. Use the various features through the intuitive UI
 
-## Requirements
-- Python with Streamlit
-- Additional dependencies:
-  - pandas
-  - requests
-  - duckdb
-  - pytz
+## Run Locally
+
+1. Clone the repo: `git clone https://github.com/g-kannan/ATMBricks.git`
+2. Install dependencies: `pip install -r requirements.txt`
+3. Run the app: `streamlit run app.py`
+
+## Contribute
+Please raise an issue if you encounter any bugs or have any suggestions: https://github.com/g-kannan/ATMBricks/issues
