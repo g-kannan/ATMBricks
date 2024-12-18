@@ -1,4 +1,4 @@
-# ATMBricks
+![ATMBricks](assets/ATMBricks.png)
 
 ATMBricks (Audit, Tweak & Make Databricks API Calls easily) is a Streamlit-based application that simplifies the management and monitoring of Databricks workspaces.
 
