@@ -9,8 +9,7 @@ import pytz
 import duckdb
 
 st.set_page_config(layout="wide",page_title='ATMBricks')
-st.title("ATMBricks")
-st.header("Audit, Tweak & Make Databricks API Calls easily")
+st.image("./assets/ATMBricks_Logo.png")
 
 def query_clusters(workspace_info: Dict) -> List[Dict]:
     """
