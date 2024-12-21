@@ -1,8 +1,8 @@
 import streamlit as st
 import json
-import requests
-from typing import Dict
 import pandas as pd
+from typing import Dict
+from databricks_utils import make_api_request, load_workspace_config, setup_workspace_selector
 
 st.set_page_config(layout="wide")
 
@@ -10,19 +10,7 @@ def get_metastore_details(workspace_info: Dict) -> Dict:
     """
     Get metastore details for a specific workspace
     """
-    url = f"{workspace_info['url']}/api/2.1/unity-catalog/metastores"
-    headers = {
-        "Authorization": f"Bearer {workspace_info['token']}",
-        "Content-Type": "application/json"
-    }
-    
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        return response.json()
-    except Exception as e:
-        st.error(f"Error querying metastore for {workspace_info['url']}: {str(e)}")
-        return {}
+    return make_api_request(workspace_info, "/api/2.1/unity-catalog/metastores")
 
 def get_metastore_id(metastore_details):
     return metastore_details['metastores'][0]['metastore_id']
@@ -34,40 +22,19 @@ def get_system_table_status(workspace_info: Dict) -> pd.DataFrame:
     """
     metastore_details = get_metastore_details(workspace_info)
     metastore_id = get_metastore_id(metastore_details)
-    url = f"{workspace_info['url']}/api/2.1/unity-catalog/metastores/{metastore_id}/systemschemas"
-    headers = {
-        "Authorization": f"Bearer {workspace_info['token']}",
-        "Content-Type": "application/json"
-    }
-    
-    try:
-        response = requests.get(url, headers=headers)
-        response.raise_for_status()
-        system_table_status = response.json()
-        system_table_df = pd.DataFrame(system_table_status.get('schemas', []))
-        return system_table_df
-    except Exception as e:
-        st.error(f"Error getting system schema status: {str(e)}")
-        return pd.DataFrame()
+    response_data = make_api_request(workspace_info, f"/api/2.1/unity-catalog/metastores/{metastore_id}/systemschemas")
+    system_table_df = pd.DataFrame(response_data.get('schemas', []))
+    return system_table_df
 
 def enable_system_schema(workspace_info: Dict, metastore_id: str, schema_name: str) -> Dict:
     """
     Enable a system schema for a specific metastore
     """
-    url = f"{workspace_info['url']}/api/2.1/unity-catalog/metastores/{metastore_id}/systemschemas/{schema_name}"
-    headers = {
-        "Authorization": f"Bearer {workspace_info['token']}",
-        "Content-Type": "application/json"
-    }
-    
-    try:
-        response = requests.put(url, headers=headers)
-        response.raise_for_status()
+    endpoint = f"/api/2.1/unity-catalog/metastores/{metastore_id}/systemschemas/{schema_name}"
+    response_data = make_api_request(workspace_info, endpoint, method="PUT")
+    if response_data:
         st.success(f"System schema {schema_name} enabled successfully")
-        return response.json()
-    except Exception as e:
-        st.error(f"Error enabling system schema: {str(e)}")
-        return {}
+    return response_data
 
 st.title("Workspace Admin Tools")
 
@@ -101,7 +68,7 @@ if uploaded_file is not None:
             if st.button("Get System Schema Status"):
                 system_table_df = get_system_table_status(selected_workspace)
                 if not system_table_df.empty:
-                    st.dataframe(system_table_df, hide_index=True)
+                    st.dataframe(system_table_df, hide_index=True,use_container_width=True)
                 else:
                     st.warning("No system schema status data found")
 
