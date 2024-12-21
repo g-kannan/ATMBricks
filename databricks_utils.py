@@ -48,9 +48,13 @@ def process_parallel(workspaces: List[Dict], query_func) -> pd.DataFrame:
     
     return pd.DataFrame(all_results)
 
-def convert_timestamp_columns(df: pd.DataFrame, timestamp_columns: List[str]) -> pd.DataFrame:
+def convert_timestamp_columns(df: pd.DataFrame, timestamp_columns: List[str], timezone: str = 'UTC') -> pd.DataFrame:
     """
-    Convert Unix timestamps to datetime
+    Convert Unix timestamps to datetime with specified timezone
+    Args:
+        df: Input DataFrame
+        timestamp_columns: List of column names containing timestamps
+        timezone: Target timezone (UTC/IST/MST)
     """
     conn = duckdb.connect()
     
@@ -58,7 +62,7 @@ def convert_timestamp_columns(df: pd.DataFrame, timestamp_columns: List[str]) ->
     select_parts = []
     for col in df.columns:
         if col in timestamp_columns:
-            select_parts.append(f"to_timestamp(cast({col}/1000 as double)) as {col}")
+            select_parts.append(f"to_timestamp(cast({col}/1000 as double)) AT TIME ZONE '{timezone}' as {col}")
         else:
             select_parts.append(col)
     

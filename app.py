@@ -15,6 +15,9 @@ from databricks_utils import (
 st.set_page_config(layout="wide",page_title='ATMBricks')
 st.image("./assets/ATMBricks_Logo.png")
 
+# Add timezone selector at the top level
+timezone = st.selectbox("Select Timezone", ["UTC", "IST", "MST"], index=0)
+
 def query_clusters(workspace_info: Dict) -> List[Dict]:
     """
     Query clusters for a specific workspace
@@ -40,7 +43,7 @@ def select_and_convert_times(df: pd.DataFrame) -> pd.DataFrame:
     Select only certain columns and convert time columns
     """
     timestamp_columns = ['start_time', 'terminated_time', 'last_restarted_time']
-    return convert_timestamp_columns(df, timestamp_columns)
+    return convert_timestamp_columns(df, timestamp_columns, timezone)
 
 def query_warehouses(workspace_info: Dict) -> List[Dict]:
     """
@@ -100,10 +103,11 @@ if uploaded_file is not None:
             
             if st.button("List Warehouses"):
                 st.info("Processing workspaces...")
-                warehouses_df = process_warehouses(data)
-                if not warehouses_df.empty:
+                df = process_warehouses(data)
+                if not df.empty:
                     st.success(f"Found warehouses across {len(data)} workspaces")
-                    st.dataframe(warehouses_df,hide_index=True)
+                    final_df = select_and_convert_times(df)
+                    st.dataframe(final_df, hide_index=True)
                 else:
                     st.warning("No warehouses found in any workspace")
                 
