@@ -6,7 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import duckdb
 import json
 
-def make_api_request(workspace_info: Dict, endpoint: str, method: str = "GET", data: Optional[Dict] = None) -> Dict:
+def make_api_request(workspace_info: Dict, endpoint: str, params: Optional[Dict] = None, method: str = "GET", data: Optional[Dict] = None) -> Dict:
     """
     Make an API request to Databricks workspace
     """
@@ -18,7 +18,7 @@ def make_api_request(workspace_info: Dict, endpoint: str, method: str = "GET", d
     
     try:
         if method == "GET":
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, params=params)
         elif method == "PUT":
             response = requests.put(url, headers=headers, json=data)
         response.raise_for_status()

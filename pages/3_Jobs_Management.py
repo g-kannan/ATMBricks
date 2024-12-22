@@ -12,12 +12,13 @@ st.title("Jobs Management")
 
 # Add timezone selector
 timezone = st.selectbox("Select Timezone", ["UTC", "IST", "MST"], index=0)
+job_filter = st.selectbox("Select Job ", ["All", "Successful", "Failed"], index=0)
 
 def get_jobs(workspace_info: Dict) -> List[Dict]:
     """
     Get list of job runs for a specific workspace
     """
-    response_data = make_api_request(workspace_info, "/api/2.2/jobs/runs/list")
+    response_data = make_api_request(workspace_info, "/api/2.2/jobs/runs/list", params={"completed_only": "false"})
     runs = response_data.get('runs', [])
     
     # Add workspace information to each run
@@ -45,12 +46,14 @@ def process_jobs_data(jobs_data: List[Dict]) -> pd.DataFrame:
         job_id,
         run_id,
         original_attempt_run_id,
-        state['result_state']::VARCHAR as result_state,
-        state['state_message']::VARCHAR as state_message,
-        status['state']::VARCHAR as status_state,
+        --state['result_state']::VARCHAR
+        json_extract_string(state, '$.result_state') as result_state,
+        json_extract_string(state, '$.state_message') as state_message,
+        --status['state']::VARCHAR as status_state,
+        json_extract_string(status, '$.state') as status_state,
         start_time,
         end_time,
-        run_duration,
+        (run_duration / 1000.0) / 60.0 as run_duration_min,
         run_name,
         run_page_url,
         run_type,
@@ -87,8 +90,8 @@ if uploaded_file is not None:
         selected_workspace = next((workspace for workspace in workspaces if workspace['url'] == selected_url), None)
         
         if selected_workspace:
-            if st.button("List Jobs"):
-                with st.spinner(f"Fetching jobs from {selected_url}..."):
+            if st.button("List Job Runs"):
+                with st.spinner(f"Fetching job runs from {selected_url}..."):
                     # Only get jobs for the selected workspace
                     jobs_data = get_jobs(selected_workspace)
                     jobs_df = process_jobs_data(jobs_data)
