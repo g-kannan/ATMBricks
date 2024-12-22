@@ -97,6 +97,7 @@ if uploaded_file is not None:
                 if not df.empty:
                     st.success(f"Found clusters across {len(data)} workspaces")
                     final_df = select_and_convert_times(df)
+                    final_df = final_df[final_df['cluster_source'] != 'JOB']
                     st.dataframe(final_df,hide_index=True)
                 else:
                     st.warning("No clusters found in any workspace")
