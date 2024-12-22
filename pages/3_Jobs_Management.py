@@ -13,11 +13,14 @@ st.title("Jobs Management")
 # Add timezone selector
 timezone = st.selectbox("Select Timezone", ["UTC", "IST", "MST","PST"], index=0)
 
-def get_jobs(workspace_info: Dict) -> List[Dict]:
+def get_jobs(workspace_info: Dict, job_id: str = None, limit: int = 0) -> List[Dict]:
     """
     Get list of job runs for a specific workspace
     """
-    response_data = make_api_request(workspace_info, "/api/2.2/jobs/runs/list", params={"completed_only": "false"})
+    params = {"completed_only": "false","limit":limit}
+    if job_id:
+        params['job_id'] = job_id
+    response_data = make_api_request(workspace_info, "/api/2.2/jobs/runs/list", params=params)
     runs = response_data.get('runs', [])
     
     # Add workspace information to each run
@@ -100,3 +103,18 @@ if uploaded_file is not None:
                         st.dataframe(jobs_df, hide_index=True, use_container_width=True)
                     else:
                         st.info("No jobs found")
+
+            st.divider()
+            job_ids = st.text_input("Enter jobID(s) separated by commas")
+            if st.button("List Specific Job(s) latest status"):
+                if job_ids:
+                    job_ids = [int(job_id.strip()) for job_id in job_ids.split(",")]
+                    jobs_data = []
+                    for job_id in job_ids:
+                        with st.spinner(f"Fetching job run status for jobID: {job_id} from {selected_url}..."):
+                            jobs_data.extend(get_jobs(selected_workspace, job_id,limit=1))
+                    jobs_df = process_jobs_data(jobs_data)
+                    if not jobs_df.empty:
+                        st.dataframe(jobs_df, hide_index=True, use_container_width=True)
+                    else:
+                        st.info(f"No jobs found for jobID(s): {', '.join(map(str, job_ids))}")
