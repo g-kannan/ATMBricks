@@ -53,7 +53,7 @@ def process_jobs_data(jobs_data: List[Dict]) -> pd.DataFrame:
         status_termination_details_message as termination_message,
         start_time,
         end_time,
-        (run_duration / 1000.0) / 60.0 as run_duration_min,
+        round((run_duration / 1000.0) / 60.0, 2) as run_duration_min,
         run_page_url,
         run_type,
         creator_user_name,
