@@ -11,8 +11,7 @@ st.set_page_config(layout="wide")
 st.title("Jobs Management")
 
 # Add timezone selector
-timezone = st.selectbox("Select Timezone", ["UTC", "IST", "MST"], index=0)
-job_filter = st.selectbox("Select Job ", ["All", "Successful", "Failed"], index=0)
+timezone = st.selectbox("Select Timezone", ["UTC", "IST", "MST","PST"], index=0)
 
 def get_jobs(workspace_info: Dict) -> List[Dict]:
     """
@@ -36,28 +35,30 @@ def process_jobs_data(jobs_data: List[Dict]) -> pd.DataFrame:
         return pd.DataFrame()
 
     # Create DataFrame and register as DuckDB table
-    df = pd.DataFrame(jobs_data)
+    df = pd.json_normalize(jobs_data)
+    df.rename(columns=lambda x: x.replace('.', '_'), inplace=True)
+    for col in ['state_result_state', 'status_state', 'status_termination_details_message']:
+        if col not in df.columns:
+            df[col] = "NA"
+    
     conn = duckdb.connect()
     conn.register('jobs_temp', df)
     
     # SQL query to transform the data
     query = """
     SELECT 
-        job_id,
-        run_id,
-        original_attempt_run_id,
-        --state['result_state']::VARCHAR
-        json_extract_string(state, '$.result_state') as result_state,
-        json_extract_string(state, '$.state_message') as state_message,
-        --status['state']::VARCHAR as status_state,
-        json_extract_string(status, '$.state') as status_state,
+        run_name as job_name,
+        state_result_state,
+        status_state,
+        status_termination_details_message as termination_message,
         start_time,
         end_time,
         (run_duration / 1000.0) / 60.0 as run_duration_min,
-        run_name,
         run_page_url,
         run_type,
         creator_user_name,
+        job_id,
+        run_id,
         workspace_url,
         environment
     FROM jobs_temp

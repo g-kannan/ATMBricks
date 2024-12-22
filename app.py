@@ -16,7 +16,7 @@ st.set_page_config(layout="wide",page_title='ATMBricks')
 st.image("./assets/ATMBricks_Logo.png")
 
 # Add timezone selector at the top level
-timezone = st.selectbox("Select Timezone", ["UTC", "IST", "MST"], index=0)
+timezone = st.selectbox("Select Timezone", ["UTC", "IST", "MST","PST"], index=0)
 
 def query_clusters(workspace_info: Dict) -> List[Dict]:
     """
