@@ -79,6 +79,15 @@ def process_jobs_data(jobs_data: List[Dict]) -> pd.DataFrame:
     
     return result_df
 
+def process_specific_jobs_ids(job_ids: str, selected_workspace: Dict, selected_url: str) -> pd.DataFrame:
+    job_ids = [int(job_id.strip()) for job_id in job_ids.split(",")]
+    jobs_data = []
+    for job_id in job_ids:
+        with st.spinner(f"Fetching job run status for jobID: {job_id} from {selected_url}..."):
+            jobs_data.extend(get_jobs(selected_workspace, job_id,limit=1))
+    jobs_df = process_jobs_data(jobs_data)
+    return jobs_df
+
 # Main app logic
 uploaded_file = st.file_uploader("Choose JSON file with Workspace details", type=["json"])
 
@@ -94,7 +103,7 @@ if uploaded_file is not None:
         selected_workspace = next((workspace for workspace in workspaces if workspace['url'] == selected_url), None)
         
         if selected_workspace:
-            if st.button("List Job Runs"):
+            if st.button("List Job Runs",icon=":material/view_timeline:"):
                 with st.spinner(f"Fetching job runs from {selected_url}..."):
                     # Only get jobs for the selected workspace
                     jobs_data = get_jobs(selected_workspace)
@@ -103,18 +112,30 @@ if uploaded_file is not None:
                         st.dataframe(jobs_df, hide_index=True, use_container_width=True)
                     else:
                         st.info("No jobs found")
+            
+            st.divider()
+            # Extract job categories if 'jobs' section exists
+            job_categories = []
+            if 'jobs' in selected_workspace:
+                job_categories = list(selected_workspace['jobs'].keys())
+            
+            # Add category selector if categories exist
+            if job_categories:
+                selected_category = st.selectbox("Select from Predefined Job Categories", job_categories)
+                if st.button("Get Job runs for selected category",icon=":material/view_list:"):
+                    if selected_category:
+                        job_ids = selected_workspace['jobs'].get(selected_category, "")
+                        jobs_df = process_specific_jobs_ids(job_ids, selected_workspace, selected_url)
+                        if not jobs_df.empty:
+                            st.dataframe(jobs_df, hide_index=True, use_container_width=True)
+                        else:
+                            st.info(f"No jobs found for jobID(s): {', '.join(map(str, job_ids))}")
 
             st.divider()
             job_ids = st.text_input("Enter jobID(s) separated by commas")
-            if st.button("List Specific Job(s) latest status"):
-                if job_ids:
-                    job_ids = [int(job_id.strip()) for job_id in job_ids.split(",")]
-                    jobs_data = []
-                    for job_id in job_ids:
-                        with st.spinner(f"Fetching job run status for jobID: {job_id} from {selected_url}..."):
-                            jobs_data.extend(get_jobs(selected_workspace, job_id,limit=1))
-                    jobs_df = process_jobs_data(jobs_data)
-                    if not jobs_df.empty:
-                        st.dataframe(jobs_df, hide_index=True, use_container_width=True)
-                    else:
-                        st.info(f"No jobs found for jobID(s): {', '.join(map(str, job_ids))}")
+            if st.button("List Specific Job(s) latest status",icon=":material/view_list:"):
+                jobs_df = process_specific_jobs_ids(job_ids, selected_workspace, selected_url)
+                if not jobs_df.empty:
+                    st.dataframe(jobs_df, hide_index=True, use_container_width=True)
+                else:
+                    st.info(f"No jobs found for jobID(s): {', '.join(map(str, job_ids))}")

@@ -30,6 +30,22 @@ ATMBricks (Audit, Tweak & Make Databricks API Calls easily) is a Streamlit-based
 ### 3. Secret Management (Coming Soon)
 - Work in progress feature for managing Databricks secrets
 
+### 4. Jobs Management
+- **Job Runs**: Get job runs for all jobs, filtered by job categories
+- **Job Categories**: Extract job categories from workspace configuration
+- **Detailed Job Information**: Get detailed information for specific job runs
+- **Multi-workspace Support**: Process and view job runs from multiple workspaces simultaneously
+- **Parallel Processing**: Efficient data gathering using concurrent API calls
+
+## Tools Used
+
+- **Streamlit**: Python web application framework for data science
+- **Requests**: Simplified HTTP requests
+- **Concurrent.futures**: Concurrent execution of tasks
+- **Pandas**: Data manipulation and analysis
+- **DuckDB**: In-memory DataFrame management
+
+
 ## Ease of Use
 
 1. **Simple Configuration**:
