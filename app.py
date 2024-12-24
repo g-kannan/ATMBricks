@@ -79,7 +79,11 @@ if show_sample_json:
         {
         "url": "https://workspace2.clouddatabricks.net",
         "token": "token",
-        "environment": "prod"
+        "environment": "prod",
+        "jobs": {
+            "etl": "680318963389412,887764713478314",
+            "dashboards": "680318963389412,887764713478314"
+            }
         }
     ]
     """)
@@ -91,7 +95,7 @@ if uploaded_file is not None:
         if not isinstance(data, list):
             st.error("Invalid JSON format. Expected a list of workspace configurations.")
         else:
-            if st.button("List Clusters"):
+            if st.button("List Clusters",icon=":material/host:"):
                 st.info("Processing workspaces...")
                 df = process_workspaces(data)
                 if not df.empty:
@@ -102,7 +106,7 @@ if uploaded_file is not None:
                 else:
                     st.warning("No clusters found in any workspace")
             
-            if st.button("List Warehouses"):
+            if st.button("List Warehouses",icon=":material/warehouse:"):
                 st.info("Processing workspaces...")
                 df = process_warehouses(data)
                 if not df.empty:

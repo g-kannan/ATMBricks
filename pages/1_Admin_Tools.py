@@ -54,7 +54,7 @@ if uploaded_file is not None:
             # Find the selected workspace configuration
             selected_workspace = next((workspace for workspace in data if workspace['url'] == selected_url), None)
 
-            if st.button("List Metastores"):
+            if st.button("List Metastores",icon=":material/info:"):
                 if selected_workspace:
                     st.info(f"Fetching metastore details for {selected_url}")
                     metastore_details = get_metastore_details(selected_workspace)
@@ -65,7 +65,7 @@ if uploaded_file is not None:
                         st.warning("No metastore details found")
             
             # Get metastore ID from the first metastore in the list
-            if st.button("Get System Schema Status"):
+            if st.button("Get System Schema Status",icon=":material/info:"):
                 system_table_df = get_system_table_status(selected_workspace)
                 if not system_table_df.empty:
                     st.dataframe(system_table_df, hide_index=True,use_container_width=True)
@@ -83,7 +83,7 @@ if uploaded_file is not None:
                 if 'table_select' not in st.session_state:
                         st.session_state.table_select = None
                 st.session_state.table_select = st.selectbox("Select System Schema to Enable", available_tables)
-                if st.button("Enable System Schema"):
+                if st.button("Enable System Schema",icon=":material/check:"):
                     if st.session_state.table_select:  # Check if a table was selected
                         st.info(f"Enabling system schema: {st.session_state.table_select}")
                         metastore_details = get_metastore_details(selected_workspace)
