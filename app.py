@@ -38,13 +38,6 @@ def process_workspaces(workspaces: List[Dict]) -> pd.DataFrame:
     """
     return process_parallel(workspaces, query_clusters)
 
-def select_and_convert_times(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Select only certain columns and convert time columns
-    """
-    timestamp_columns = ['start_time', 'terminated_time', 'last_restarted_time']
-    return convert_timestamp_columns(df, timestamp_columns, timezone)
-
 def query_warehouses(workspace_info: Dict) -> List[Dict]:
     """
     Query SQL warehouses for a specific workspace
@@ -59,11 +52,39 @@ def query_warehouses(workspace_info: Dict) -> List[Dict]:
         
     return warehouses
 
+def process_clusters_data(df: pd.DataFrame,) -> pd.DataFrame:
+    conn = duckdb.connect()
+    conn.register('clusters_temp', df)
+    # SQL query to transform the data
+    query = """
+    SELECT cluster_name,
+            cluster_id,
+            environment,
+            autotermination_minutes,
+            spark_version,
+            runtime_engine,cluster_source,creator_user_name
+            state,state_message,start_time, terminated_time, last_restarted_time,
+    datediff('minute', to_timestamp(cast(last_restarted_time/1000 as double)), to_timestamp(cast(terminated_time/1000 as double))) as usage_minutes,
+    case when terminated_time is null then datediff('minute', to_timestamp(cast(last_restarted_time/1000 as double)), current_timestamp) else 0 end as uptime_minutes
+    ,workspace_url
+    FROM clusters_temp
+    """
+    
+    # Execute query and get results
+    processed_df = conn.execute(query).df()
+    timestamp_columns = ['start_time', 'terminated_time', 'last_restarted_time']
+    result_df = convert_timestamp_columns(processed_df, timestamp_columns, timezone)
+    conn.close()
+    return result_df
+
 def process_warehouses(workspaces: List[Dict]) -> pd.DataFrame:
     """
     Process multiple workspaces in parallel and combine warehouse results
     """
     return process_parallel(workspaces, query_warehouses)
+
+def highlight_high_usage(value):
+    return ['background-color: red' if isinstance(v, (int, float)) and v > 10 else '' for v in value]
 
 uploaded_file = st.file_uploader("Choose JSON file with Workspace details", type=["json"])
 
@@ -100,9 +121,9 @@ if uploaded_file is not None:
                 df = process_workspaces(data)
                 if not df.empty:
                     st.success(f"Found clusters across {len(data)} workspaces")
-                    final_df = select_and_convert_times(df)
+                    final_df = process_clusters_data(df)
                     final_df = final_df[final_df['cluster_source'] != 'JOB']
-                    st.dataframe(final_df,hide_index=True)
+                    st.dataframe(final_df.style.apply(highlight_high_usage),hide_index=True)
                 else:
                     st.warning("No clusters found in any workspace")
             
@@ -111,8 +132,7 @@ if uploaded_file is not None:
                 df = process_warehouses(data)
                 if not df.empty:
                     st.success(f"Found warehouses across {len(data)} workspaces")
-                    final_df = select_and_convert_times(df)
-                    st.dataframe(final_df, hide_index=True)
+                    st.dataframe(df, hide_index=True)
                 else:
                     st.warning("No warehouses found in any workspace")
                 
