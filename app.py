@@ -61,12 +61,11 @@ def process_clusters_data(df: pd.DataFrame,) -> pd.DataFrame:
             cluster_id,
             environment,
             autotermination_minutes,
-            spark_version,
-            runtime_engine,cluster_source,creator_user_name
-            state,state_message,start_time, terminated_time, last_restarted_time,
     datediff('minute', to_timestamp(cast(last_restarted_time/1000 as double)), to_timestamp(cast(terminated_time/1000 as double))) as usage_minutes,
-    case when terminated_time is null then datediff('minute', to_timestamp(cast(last_restarted_time/1000 as double)), current_timestamp) else 0 end as uptime_minutes
-    ,workspace_url
+    case when terminated_time is null then datediff('minute', to_timestamp(cast(last_restarted_time/1000 as double)), current_timestamp) else 0 end as uptime_minutes,
+    spark_version,
+    runtime_engine,cluster_source,creator_user_name,
+    state,state_message,start_time, terminated_time, last_restarted_time,workspace_url
     FROM clusters_temp
     """
     
@@ -83,8 +82,8 @@ def process_warehouses(workspaces: List[Dict]) -> pd.DataFrame:
     """
     return process_parallel(workspaces, query_warehouses)
 
-def highlight_high_usage(value):
-    return ['background-color: red' if isinstance(v, (int, float)) and v > 10 else '' for v in value]
+def highlight_high_usage(value,threshold=10):
+    return ['background-color: red' if isinstance(v, (int, float)) and v > threshold else '' for v in value]
 
 uploaded_file = st.file_uploader("Choose JSON file with Workspace details", type=["json"])
 
@@ -109,6 +108,8 @@ if show_sample_json:
     ]
     """)
 
+high_usage_threshold = st.number_input("Highlight clusters with usage > Mins", min_value=1, max_value=1000, value=10)
+
 if uploaded_file is not None:
     try:
         data = json.load(uploaded_file)
@@ -123,7 +124,7 @@ if uploaded_file is not None:
                     st.success(f"Found clusters across {len(data)} workspaces")
                     final_df = process_clusters_data(df)
                     final_df = final_df[final_df['cluster_source'] != 'JOB']
-                    st.dataframe(final_df.style.apply(highlight_high_usage),hide_index=True)
+                    st.dataframe(final_df.style.apply(highlight_high_usage,threshold=high_usage_threshold),hide_index=True)
                 else:
                     st.warning("No clusters found in any workspace")
             
